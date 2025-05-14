@@ -5,7 +5,7 @@ import json
 import chardet
 import os
 
-with open('/content/secrets.json', 'r') as f:
+with open('./config/secrets.json', 'r') as f:
   secrets = json.load(f)
 
 # Assign variables directly
@@ -13,7 +13,7 @@ github_api_key = secrets.get('github_api_key')
 openai_api_key = secrets.get('openai_api_key')
 open_ai_api_path = 'https://api.openai.com/v1/chat/completions'
 
-with open('/content/config.json', 'r') as f:
+with open('./config/config.json', 'r') as f:
   config = json.load(f)
 
 destination_repo_owner = config.get("DestinationRepoOwner")
