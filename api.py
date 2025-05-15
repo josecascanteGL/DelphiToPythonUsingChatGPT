@@ -1,14 +1,16 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from CodeProcessor import ExecuteProcessor
+from CodeProcessor import ExecuteProcessor, RelayMessageToGPT
 
 app = FastAPI()
 
 # Request body model
-class Item(BaseModel):
-    name: str
-    price: float
-    quantity: int
+class Request(BaseModel):
+    message: str
+    code: str
+
+class Response(BaseModel):
+    message: str
 
 # Root endpoint
 @app.get("/")
@@ -25,12 +27,11 @@ def execute_processor():
         raise HTTPException(status_code=500, detail=str(e))
 
 # POST endpoint with JSON body
-@app.post("/items/")
-def create_item(item: Item):
-    total = item.price * item.quantity
-    return {
-        "name": item.name,
-        "price": item.price,
-        "quantity": item.quantity,
-        "total": total
-    }
+@app.post("/relay")
+def relay(request: Request):
+    try:      
+        response = RelayMessageToGPT(request.message, request.code)
+        return Response(message = response)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+ 

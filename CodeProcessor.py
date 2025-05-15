@@ -50,7 +50,7 @@ def redirect_stdout_to_file(logfile_path: str, also_print: bool = False):
     sys.stderr = sys.stdout  # Optional: also log errors
 
 
-def decode_file_content(git_response):
+def DecodeFromBase64(git_response):
     # Step 1: Extract the base64-encoded content from GitHub
     content_b64 = git_response.json().get('content', '')
     content_bytes = base64.b64decode(content_b64)
@@ -125,10 +125,18 @@ def SendToGpt(content, instruction, gpt_model):
     'model': gpt_model,
     'messages': [{'role': 'user', 'content': f'{instruction}.:\n{content}'}]
   }
-
-  chat_response = requests.post(open_ai_api_path, headers=gpt_headers, json=chat_payload)
-  chat_result = chat_response
-  return chat_result
+  try:
+    chat_response = requests.post(open_ai_api_path, headers=gpt_headers, json=chat_payload)
+    return chat_response
+  except requests.exceptions.HTTPError as http_err:
+    print(f"HTTP error occurred: {http_err} - Status code: {chat_response.status_code}")
+  except requests.exceptions.ConnectionError:
+      print("Connection error: could not reach the server.")
+  except requests.exceptions.Timeout:
+      print("Request timed out.")
+  except requests.exceptions.RequestException as e:
+      print(f"An unexpected error occurred: {e}")  
+  return "Error from chat gpt"
 
 def SendToGitHub(content, file_name, output_file_type, time_stamp):
   new_content = base64.b64encode(content.encode('utf-8')).decode('utf-8')
@@ -146,7 +154,7 @@ def ProcessFiles(files_to_process, instruction, gpt_model, input_file_type, outp
     if file_name.lower().endswith(input_file_type):
       git_response = ReadFileInGithub(file_name)
       if git_response.status_code == 200:
-        file_content = decode_file_content(git_response)
+        file_content = DecodeFromBase64(git_response)
         print(f"Sending {files_to_process} to gpt")
         chat_result = SendToGpt(file_content, instruction, gpt_model)
         if chat_result.status_code == 200:
@@ -158,7 +166,7 @@ def ProcessFiles(files_to_process, instruction, gpt_model, input_file_type, outp
       #end if
    # else:
     #  git_response = ReadFileInGithub(file_name)
-     # file_content = decode_file_content(git_response)
+     # file_content = DecodeFromBase64(git_response)
       #SendToGitHub(file_content, file_name)
 
 def ProcessDirRecursively(dir_to_process, instruction, gpt_model, input_file_type, output_file_type, time_stamp):
@@ -199,4 +207,14 @@ def ExecuteProcessor(gpt_model = "gpt-3.5-turbo", input_file_type = ".dpr", outp
   )
   output_file_type = ".dpr"
   ProcessDirRecursively(source_path, instruction_to_gpt, gpt_model, input_file_type, output_file_type, time_stamp)
-print("==========================End of process=======================================")
+  print("==========================End of process=======================================")
+
+def RelayMessageToGPT(message, code):
+  decoded_code = base64.b64decode(code).decode("utf-8")
+  chat_result = SendToGpt(decoded_code, message, "gpt-3.5-turbo")
+  if chat_result.status_code == 200:
+    chat_result = chat_result.json()['choices'][0]['message']['content']
+  else:
+    chat_result = chat_result.text
+  return chat_result
+
