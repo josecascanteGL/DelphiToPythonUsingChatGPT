@@ -26,6 +26,30 @@ git_headers = {'Authorization': f'Bearer {github_api_key}'}
 
 print(config)
 
+##for logs 
+import sys
+
+def redirect_stdout_to_file(logfile_path: str, also_print: bool = False):
+    class Logger:
+        def __init__(self, filepath, also_stdout):
+            self.terminal = sys.stdout
+            self.log = open(filepath, "a")
+            self.also_stdout = also_stdout
+
+        def write(self, message):
+            self.log.write(message)
+            if self.also_stdout:
+                self.terminal.write(message)
+
+        def flush(self):
+            self.log.flush()
+            if self.also_stdout:
+                self.terminal.flush()
+
+    sys.stdout = Logger(logfile_path, also_print)
+    sys.stderr = sys.stdout  # Optional: also log errors
+
+
 def decode_file_content(git_response):
     # Step 1: Extract the base64-encoded content from GitHub
     content_b64 = git_response.json().get('content', '')
@@ -106,7 +130,7 @@ def SendToGpt(content, instruction, gpt_model):
   chat_result = chat_response
   return chat_result
 
-def SendToGitHub(content, file_name, output_file_type):
+def SendToGitHub(content, file_name, output_file_type, time_stamp):
   new_content = base64.b64encode(content.encode('utf-8')).decode('utf-8')
   github_destination_url = f'{github_base_url}/{destination_repo_owner}/{destination_repo_name}/contents/Generated/{time_stamp}/{RemoveExtension(file_name)}{output_file_type}'
 
@@ -117,7 +141,7 @@ def SendToGitHub(content, file_name, output_file_type):
   update_response = requests.put(github_destination_url, headers=git_headers, json=update_payload)
   print(update_response.json())
 
-def ProcessFiles(files_to_process, instruction, gpt_model, input_file_type, output_file_type):
+def ProcessFiles(files_to_process, instruction, gpt_model, input_file_type, output_file_type, time_stamp):
   for file_name in files_to_process:
     if file_name.lower().endswith(input_file_type):
       git_response = ReadFileInGithub(file_name)
@@ -127,7 +151,7 @@ def ProcessFiles(files_to_process, instruction, gpt_model, input_file_type, outp
         chat_result = SendToGpt(file_content, instruction, gpt_model)
         if chat_result.status_code == 200:
           chat_result = chat_result.json()['choices'][0]['message']['content']
-          SendToGitHub(chat_result, file_name, output_file_type)
+          SendToGitHub(chat_result, file_name, output_file_type, time_stamp)
         else:
           chat_result = chat_result.text
       print(git_response)
@@ -137,43 +161,42 @@ def ProcessFiles(files_to_process, instruction, gpt_model, input_file_type, outp
      # file_content = decode_file_content(git_response)
       #SendToGitHub(file_content, file_name)
 
-def ProcessDirRecursively(dir_to_process, instruction, gpt_model, input_file_type, output_file_type):
+def ProcessDirRecursively(dir_to_process, instruction, gpt_model, input_file_type, output_file_type, time_stamp):
+  redirect_stdout_to_file("app.log", also_print=True)
   print(f'Processing directory: {dir_to_process}')
   GetFolderFiles(dir_to_process)
   to_process = GetFolderFiles(dir_to_process)
-  ProcessFiles(to_process, instruction, gpt_model, input_file_type, output_file_type)
+  ProcessFiles(to_process, instruction, gpt_model, input_file_type, output_file_type, time_stamp)
   sub_dirs = GetSubFolders(dir_to_process)
   for sub_dir in sub_dirs:
     ProcessDirRecursively(sub_dir, instruction, gpt_model, input_file_type, output_file_type)
 
+def ExecuteProcessor(gpt_model = "gpt-3.5-turbo", input_file_type = ".dpr", output_file_type = ".py"):
+  time_stamp = GenerateTimestamp()
+  instruction_to_gpt = (
+      "You are a Delphi-to-Python code converter. I will provide you with Delphi code, "
+      "and your task is to convert it to equivalent Python code.\n\n"
+      "- Do not include any explanations, comments, or formatting syntax (no triple backticks, no markdown).\n"
+      "- Output only the Python and nothing else. Do not use markdown, code blocks, or extra formatting.\n"
+      "- Add inline comments to explain parts of the code that are not easy to understand.\n"
+      "- Match the logic and structure closely.\n"
+      "- Use Pythonic idioms where appropriate.\n\n"
+      "Here is the Delphi code to convert:\n\n"
+  )
 
-time_stamp = GenerateTimestamp()
-gpt_model = "gpt-3.5-turbo"
-input_file_type = ".dpr"
-output_file_type = ".py"
-instruction_to_gpt = (
-    "You are a Delphi-to-Python code converter. I will provide you with Delphi code, "
-    "and your task is to convert it to equivalent Python code.\n\n"
-    "- Do not include any explanations, comments, or formatting syntax (no triple backticks, no markdown).\n"
-    "- Output only the Python and nothing else. Do not use markdown, code blocks, or extra formatting.\n"
-    "- Add inline comments to explain parts of the code that are not easy to understand.\n"
-    "- Match the logic and structure closely.\n"
-    "- Use Pythonic idioms where appropriate.\n\n"
-    "Here is the Delphi code to convert:\n\n"
-)
-
-ProcessDirRecursively(source_path, instruction_to_gpt, gpt_model, input_file_type, output_file_type)
+  ProcessDirRecursively(source_path, instruction_to_gpt, gpt_model, input_file_type, output_file_type, time_stamp)
 
 
-# this part is going to anotate and sugest improvements
-instruction_to_gpt = (
-    "You are a Delphi code reviewer and annotator. I will provide you with Delphi source code.\n\n"
-    "- Keep the original Delphi code completely intact.\n"
-    "- Add inline comments to explain what each part of the code is doing.\n"
-    "- Where appropriate, add suggestions for potential improvements or refactors as comments.\n"
-    "- Do not remove or modify any existing code.\n"
-    "- Output only the Delphi code with your added comments, and nothing else. Do not use markdown, code blocks, or extra formatting.\n\n"
-    "Here is the Delphi code to annotate:\n\n"
-)
-output_file_type = ".dpr"
-ProcessDirRecursively(source_path, instruction_to_gpt, gpt_model, input_file_type, output_file_type)
+  # this part is going to anotate and sugest improvements
+  instruction_to_gpt = (
+      "You are a Delphi code reviewer and annotator. I will provide you with Delphi source code.\n\n"
+      "- Keep the original Delphi code completely intact.\n"
+      "- Add inline comments to explain what each part of the code is doing.\n"
+      "- Where appropriate, add suggestions for potential improvements or refactors as comments.\n"
+      "- Do not remove or modify any existing code.\n"
+      "- Output only the Delphi code with your added comments, and nothing else. Do not use markdown, code blocks, or extra formatting.\n\n"
+      "Here is the Delphi code to annotate:\n\n"
+  )
+  output_file_type = ".dpr"
+  ProcessDirRecursively(source_path, instruction_to_gpt, gpt_model, input_file_type, output_file_type, time_stamp)
+print("==========================End of process=======================================")
