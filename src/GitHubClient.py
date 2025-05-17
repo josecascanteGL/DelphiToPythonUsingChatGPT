@@ -4,6 +4,7 @@ from Configuration import Configuration
 from Helper import Utils
 
 
+
 class GitHubClient:
     config: Configuration
     
@@ -70,8 +71,6 @@ class GitHubClient:
 
         return root
 
-
-
     def GetFolderFiles(self, folder_name: str):
         github_origin_url = f'{self.config.github_base_url}/{self.config.source_repo_owner}/{self.config.source_repo_name}/contents/{folder_name}'
         response = requests.get(github_origin_url, headers=self.config.git_headers)
@@ -82,6 +81,23 @@ class GitHubClient:
         else:
             print(f"Error getting files in folder {github_origin_url}: {response.status_code} - {response.text}")
             return []
+        
+    def GetSpecificFile(self, owner, repo, folder, file_name, branch='main'):
+        github_origin_url = f'{self.config.github_base_url}/{owner}/{repo}/contents/{folder}/{file_name}'
+        print(github_origin_url)
+        response = requests.get(github_origin_url, headers=self.config.git_headers)
+        if response.status_code != 200:
+            print(f"Error reading file {github_origin_url}: {response.status_code} - {response.text}")
+               
+        # Base64-encode the content
+        file_bytes = response.content
+        encoded_content = base64.b64encode(file_bytes).decode('utf-8')
+
+        return {
+            "file": file_name,
+            "content_base64": encoded_content
+        }
+
 
 
     def GetSubFolders(self, folder_name:str):

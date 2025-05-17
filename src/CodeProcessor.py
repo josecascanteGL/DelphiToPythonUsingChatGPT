@@ -81,3 +81,6 @@ def RelayMessageToGPT(message, code):
 def GetGitTreeStructure(owner:str, repository:str):
   response = git_hub_client.FetchGithubTree(owner, repository)
   return response
+
+def GetFileFromGit(owner:str, repository:str, folder:str, file_name:str):
+  return git_hub_client.GetSpecificFile(owner, repository, folder, file_name)
