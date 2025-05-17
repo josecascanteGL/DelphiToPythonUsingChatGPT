@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import axios from 'axios';
 
 const TreeNode = ({ node, onFileClick }) => {
   const [collapsed, setCollapsed] = useState(true);
@@ -37,6 +38,17 @@ const App = () => {
   const [fileContent, setFileContent] = useState('');
   const [activeTab, setActiveTab] = useState('tree');
   const [chatOpen, setChatOpen] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const fetchData = async () => {
+    try {
+      const response = await axios.get('http://0.0.0.0/execute');
+      setMessage(response.data.message);
+    } catch (error) {
+      console.error('Error:', error);
+      setMessage('Failed to fetch data');
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -127,6 +139,10 @@ const App = () => {
         <div className="p-4 text-center text-muted">
           <h4>📦 Process Full Repository</h4>
           <p>Feature coming soon. You’ll be able to run analysis and batch processing here.</p>
+          <div style={{ textAlign: 'center', marginTop: '50px' }}>
+            <button onClick={fetchData}>Call Python API</button>
+            <p>{message}</p>
+          </div>
         </div>
       )}
 
