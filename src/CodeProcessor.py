@@ -40,6 +40,7 @@ def ProcessDirRecursively(dir_to_process, instruction, gpt_model, input_file_typ
 
 def ExecuteProcessor(gpt_model = "gpt-3.5-turbo", input_file_type = ".dpr", output_file_type = ".py"):
   time_stamp = Utils.GenerateTimestamp()
+  #load RAG information 
   instruction_to_gpt = (
       "You are a Delphi-to-Python code converter. I will provide you with Delphi code, "
       "and your task is to convert it to equivalent Python code.\n\n"
