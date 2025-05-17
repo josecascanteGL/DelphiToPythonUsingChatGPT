@@ -7,14 +7,17 @@ class OpenAiClient:
     def __init__(self, config:Configuration):
         self.config = config
     
-    def SendToGpt(self, content, instruction, gpt_model):
+    def SendToGpt(self, content, instruction, gpt_model, history):
+      history.append({'role': 'user', 'content': f'{instruction}.:\n{content}'})
+      
+
       gpt_headers = {
         'Authorization': f'Bearer {self.config.openai_api_key}',
         'Content-Type': 'application/json'
       }
       chat_payload = {
         'model': gpt_model,
-        'messages': [{'role': 'user', 'content': f'{instruction}.:\n{content}'}]
+        'messages': history
       }
       try:
         chat_response = requests.post(self.config.open_ai_api_path, headers=gpt_headers, json=chat_payload)

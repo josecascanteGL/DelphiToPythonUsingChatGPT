@@ -1,9 +1,17 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from CodeProcessor import ExecuteProcessor, RelayMessageToGPT, GetGitTreeStructure
+from CodeProcessor import ExecuteProcessor, RelayMessageToGPT, GetGitTreeStructure, GetFileFromGit
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permite todos los orígenes
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Request body model
 class Request(BaseModel):
@@ -42,8 +50,6 @@ def relay(request: Request):
 @app.get("/loadtree/{owner}/{repo}")
 def load_tree(owner: str, repo:str):
     try:
-        print(owner)
-        print(repo)
         response = GetGitTreeStructure(owner, repo)
         if(response != None):
             return JSONResponse(content=response)
@@ -52,3 +58,14 @@ def load_tree(owner: str, repo:str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
  #"josecascanteGL", "DelphiToPythonUsingChatGPT"
+
+@app.get("/loadfile/{owner}/{repo}/{folder}/{file_name}")
+def load_tree(owner: str, repo:str, folder:str, file_name:str):
+    try:
+        response = GetFileFromGit(owner, repo, folder, file_name)
+        if(response != None):
+            return JSONResponse(content=response)
+        else:
+            return JSONResponse(content="{}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
