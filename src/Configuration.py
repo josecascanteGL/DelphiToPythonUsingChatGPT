@@ -1,9 +1,12 @@
 import json
+import os
 
 class Configuration:
     def __init__(self):
         # Load secrets
-        with open('../config/secrets.json', 'r') as f:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # gets project root
+        secrets_config_path = os.path.join(base_dir, 'src/config', 'secrets.json')
+        with open(secrets_config_path, 'r') as f:
             secrets = json.load(f)
 
         self.github_api_key = secrets.get('github_api_key')
@@ -11,7 +14,8 @@ class Configuration:
         self.open_ai_api_path = 'https://api.openai.com/v1/chat/completions'
 
         # Load config
-        with open('../config/config.json', 'r') as f:
+        secrets_config_path = os.path.join(base_dir, 'src/config', 'config.json')
+        with open(secrets_config_path, 'r') as f:
             config = json.load(f)
 
         self.destination_repo_owner = config.get("DestinationRepoOwner")

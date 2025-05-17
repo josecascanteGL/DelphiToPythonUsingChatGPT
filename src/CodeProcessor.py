@@ -38,7 +38,7 @@ def ProcessDirRecursively(dir_to_process, instruction, gpt_model, input_file_typ
   for sub_dir in sub_dirs:
     ProcessDirRecursively(sub_dir, instruction, gpt_model, input_file_type, output_file_type)
 
-def ExecuteProcessor(gpt_model = "gpt-3.5-turbo", input_file_type = ".dpr", output_file_type = ".py"):
+def ExecuteProcessor(gpt_model = "gpt-4-turbo", input_file_type = ".dpr", output_file_type = ".py"):
   time_stamp = Utils.GenerateTimestamp()
   #load RAG information 
   instruction_to_gpt = (
@@ -71,10 +71,13 @@ def ExecuteProcessor(gpt_model = "gpt-3.5-turbo", input_file_type = ".dpr", outp
 
 def RelayMessageToGPT(message, code):
   decoded_code = base64.b64decode(code).decode("utf-8")
-  chat_result = openAiClient.SendToGpt(decoded_code, message, "gpt-3.5-turbo")
+  chat_result = openAiClient.SendToGpt(decoded_code, message, "gpt-4-turbo")
   if chat_result.status_code == 200:
     chat_result = chat_result.json()['choices'][0]['message']['content']
   else:
     chat_result = chat_result.text
   return chat_result
 
+def GetGitTreeStructure(owner:str, repository:str):
+  response = git_hub_client.FetchGithubTree(owner, repository)
+  return response

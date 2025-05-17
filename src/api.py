@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from CodeProcessor import ExecuteProcessor, RelayMessageToGPT
+from CodeProcessor import ExecuteProcessor, RelayMessageToGPT, GetGitTreeStructure
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
@@ -11,6 +12,7 @@ class Request(BaseModel):
 
 class Response(BaseModel):
     message: str
+
 
 # Root endpoint
 @app.get("/")
@@ -37,11 +39,16 @@ def relay(request: Request):
         raise HTTPException(status_code=500, detail=str(e))
     
 #Will return the tree structure from a given repo on github 
-@app.post("/loadtree")
-def load_tree(repo_url: str):
-    try:      
-        response = RelayMessageToGPT(repo_url)
-        return Response(message = response)
+@app.get("/loadtree/{owner}/{repo}")
+def load_tree(owner: str, repo:str):
+    try:
+        print(owner)
+        print(repo)
+        response = GetGitTreeStructure(owner, repo)
+        if(response != None):
+            return JSONResponse(content=response)
+        else:
+            return JSONResponse(content="{}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
- 
+ #"josecascanteGL", "DelphiToPythonUsingChatGPT"
