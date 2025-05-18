@@ -21,55 +21,63 @@ class GitHubClient:
             print(f"Error getting files in folder {repo_url}: {response.status_code} - {response.text}")
             return []
         
-    def FetchGithubTree(self, owner, repo, branch='main', blacklist=None):
-        if blacklist is None:
-            blacklist = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico', '.pdf', '.zip', '.exe']
-
+    def FetchGithubTree(self, owner, repo, branch='main'):
+        whitelist = [
+            ".adt", ".bdsdeploy", ".bdsgroup", ".bdsproj", ".bpg", ".bpl", ".cbk", ".cfg",
+            ".config", ".d", ".dcl", ".dcp", ".dcpil", ".dcr", ".dcu", ".dcuil", ".ddp",
+            ".dfm", ".dof", ".dpc", ".dpk", ".dpkw", ".dpl", ".dpr", ".dproj", ".drc",
+            ".dres", ".dsk", ".dsm", ".dst", ".groupproj", ".identcache", ".int", ".local",
+            ".map", ".mts", ".nfm", ".pas", ".proj", ".res", ".resources", ".rsm", ".tlb",
+            ".todo", ".tvsconfig", "txvpck", "txvcls", ".vlb"
+        ]
 
         base_url = f"https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}?recursive=1"
         response = requests.get(base_url, headers=self.config.git_headers)
+
         if response.status_code != 200:
             raise Exception(f"GitHub API error: {response.status_code} - {response.text}")
-        
-        tree_data = response.json()["tree"]
 
+        tree_data = response.json()["tree"]
         root = {"name": repo, "type": "dir", "contents": []}
         node_map = {repo: root}
 
         for item in tree_data:
+            if item["type"] != "blob":
+                continue
+
+            file_name = item["path"].split("/")[-1]
+            if not any(file_name.lower().endswith(ext.lower()) for ext in whitelist):
+                continue
+
             path_parts = item["path"].split("/")
-            file_name = path_parts[-1]
-
-            # Skip blacklisted file extensions
-            if item["type"] == "blob":
-                if any(file_name.lower().endswith(ext.lower()) for ext in blacklist):
-                    continue
-
             current_path = repo
+
             for i, part in enumerate(path_parts):
                 parent_path = current_path
                 current_path = f"{current_path}/{part}"
-
                 is_last = (i == len(path_parts) - 1)
-                item_type = item["type"] if is_last else "tree"
+                node_type = item["type"] if is_last else "tree"
 
                 if current_path not in node_map:
-                    node = {
-                        "name": part,
-                        "type": "dir" if item_type == "tree" else "file",
-                    }
+                    node = {"name": part, "type": "dir" if node_type == "tree" else "file"}
                     if node["type"] == "dir":
                         node["contents"] = []
+                        node_map[current_path] = node
 
-                    # Add to parent
                     parent_node = node_map.get(parent_path)
                     if parent_node and "contents" in parent_node:
                         parent_node["contents"].append(node)
 
-                    if node["type"] == "dir":
-                        node_map[current_path] = node
+        def prune_empty_dirs(node):
+            if node["type"] != "dir":
+                return True
 
+            node["contents"] = [child for child in node["contents"] if prune_empty_dirs(child)]
+            return bool(node["contents"])
+
+        prune_empty_dirs(root)
         return root
+
 
     def GetFolderFiles(self, folder_name: str):
         github_origin_url = f'{self.config.github_base_url}/{self.config.source_repo_owner}/{self.config.source_repo_name}/contents/{folder_name}'
