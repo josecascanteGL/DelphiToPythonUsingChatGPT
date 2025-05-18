@@ -1,8 +1,10 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 from CodeProcessor import ExecuteProcessor, RelayMessageToGPT, GetGitTreeStructure, GetFileFromGit
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from Models.relay import RelayRequest, RelayResponse
+from Models.loadFile import LoadFileRequest
+from Models.execute import ExecuteProcessorRequest
 
 app = FastAPI()
 app.add_middleware(
@@ -12,15 +14,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Request body model
-class Request(BaseModel):
-    message: str
-    code: str
-
-class Response(BaseModel):
-    message: str
-
 
 # Root endpoint
 @app.get("/")
@@ -32,21 +25,30 @@ def read_root():
 @app.get("/execute")
 def execute_processor():
     try:
-        ExecuteProcessor()
-        return {"message": "Process completed."}
+        result = ExecuteProcessor()
+        return {"message": "Process completed.", "url": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+#@app.post("/execute")
+#def execute_processor(request: ExecuteProcessorRequest):
+ #   try:
+  #      ExecuteProcessor(request.gpt_model, request.input_file_type, request.output_file_type)
+   #     return {"message": "Process completed."}
+    #except Exception as e:
+     #   raise HTTPException(status_code=500, detail=str(e))
 
 #Sends message directly to ChatGPT 
 @app.post("/relay")
-def relay(request: Request):
+def relay(request: RelayRequest):
     try:      
         response = RelayMessageToGPT(request.message, request.code)
-        return Response(message = response)
+        return RelayResponse(message = response)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
 #Will return the tree structure from a given repo on github 
+#"josecascanteGL", "DelphiToPythonUsingChatGPT"
 @app.get("/loadtree/{owner}/{repo}")
 def load_tree(owner: str, repo:str):
     try:
@@ -57,15 +59,8 @@ def load_tree(owner: str, repo:str):
             return JSONResponse(content="{}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
- #"josecascanteGL", "DelphiToPythonUsingChatGPT"
 
 
-# Define request body schema
-class LoadFileRequest(BaseModel):
-    owner: str
-    repo: str
-    folder: str
-    file_name: str
 
 @app.post("/loadfile")
 def load_tree(request: LoadFileRequest):
@@ -73,8 +68,7 @@ def load_tree(request: LoadFileRequest):
         response = GetFileFromGit(
             request.owner,
             request.repo,
-            request.folder,
-            request.file_name
+            request.full_file_name
         )
         if response is not None:
             return JSONResponse(content=response)

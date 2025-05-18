@@ -17,7 +17,7 @@ def ProcessFiles(files_to_process, instruction, gpt_model, input_file_type, outp
       if git_response.status_code == 200:
         file_content = Utils.DecodeFromBase64(git_response)
         print(f"Sending {files_to_process} to gpt")
-        chat_result = openAiClient.SendToGpt(file_content, instruction, gpt_model)
+        chat_result = openAiClient.SendToGpt(file_content, instruction, gpt_model, [])
         if chat_result.status_code == 200:
           chat_result = chat_result.json()['choices'][0]['message']['content']
           git_hub_client.SendToGitHub(chat_result, file_name, output_file_type, time_stamp)
@@ -69,6 +69,7 @@ def ExecuteProcessor(gpt_model = "gpt-4-turbo", input_file_type = ".dpr", output
   )
   output_file_type = ".dpr"
   ProcessDirRecursively(config.source_path, instruction_to_gpt, gpt_model, input_file_type, output_file_type, time_stamp)
+  return f"https://github.com/{config.destination_repo_owner}/{config.destination_repo_name}/tree/main/Generated/{time_stamp}"
   print("==========================End of process=======================================")
 
 def RelayMessageToGPT(message, code):
@@ -89,5 +90,5 @@ def GetGitTreeStructure(owner:str, repository:str):
   response = git_hub_client.FetchGithubTree(owner, repository)
   return response
 
-def GetFileFromGit(owner:str, repository:str, folder:str, file_name:str):
-  return git_hub_client.GetSpecificFile(owner, repository, folder, file_name)
+def GetFileFromGit(owner:str, repository:str, full_file_name:str):
+  return git_hub_client.GetSpecificFile(owner, repository, full_file_name)
