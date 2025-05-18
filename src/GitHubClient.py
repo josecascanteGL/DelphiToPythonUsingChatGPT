@@ -38,45 +38,55 @@ class GitHubClient:
             raise Exception(f"GitHub API error: {response.status_code} - {response.text}")
 
         tree_data = response.json()["tree"]
-        root = {"name": repo, "type": "dir", "contents": []}
-        node_map = {repo: root}
+        root = {"name": repo, "type": "dir", "contents": [], "path": ""}
+        node_map = {"": root}
 
         for item in tree_data:
             if item["type"] != "blob":
                 continue
 
-            file_name = item["path"].split("/")[-1]
+            file_path = item["path"]
+            file_name = file_path.split("/")[-1]
+
             if not any(file_name.lower().endswith(ext.lower()) for ext in whitelist):
                 continue
 
-            path_parts = item["path"].split("/")
-            current_path = repo
+            path_parts = file_path.split("/")
+            current_path = ""
 
             for i, part in enumerate(path_parts):
                 parent_path = current_path
-                current_path = f"{current_path}/{part}"
+                current_path = f"{current_path}/{part}" if current_path else part
                 is_last = (i == len(path_parts) - 1)
                 node_type = item["type"] if is_last else "tree"
 
-                if current_path not in node_map:
-                    node = {"name": part, "type": "dir" if node_type == "tree" else "file"}
-                    if node["type"] == "dir":
-                        node["contents"] = []
-                        node_map[current_path] = node
+                if current_path in node_map:
+                    continue
 
-                    parent_node = node_map.get(parent_path)
-                    if parent_node and "contents" in parent_node:
-                        parent_node["contents"].append(node)
+                node = {
+                    "name": part,
+                    "type": "dir" if node_type == "tree" else "file",
+                    "path": current_path
+                }
+
+                if node["type"] == "dir":
+                    node["contents"] = []
+                    node_map[current_path] = node
+
+                parent_node = node_map.get(parent_path)
+                if parent_node and "contents" in parent_node:
+                    parent_node["contents"].append(node)
 
         def prune_empty_dirs(node):
             if node["type"] != "dir":
                 return True
-
             node["contents"] = [child for child in node["contents"] if prune_empty_dirs(child)]
             return bool(node["contents"])
 
         prune_empty_dirs(root)
         return root
+
+
 
 
     def GetFolderFiles(self, folder_name: str):
