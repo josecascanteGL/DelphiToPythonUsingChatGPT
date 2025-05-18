@@ -59,13 +59,26 @@ def load_tree(owner: str, repo:str):
         raise HTTPException(status_code=500, detail=str(e))
  #"josecascanteGL", "DelphiToPythonUsingChatGPT"
 
-@app.get("/loadfile/{owner}/{repo}/{folder}/{file_name}")
-def load_tree(owner: str, repo:str, folder:str, file_name:str):
+
+# Define request body schema
+class LoadFileRequest(BaseModel):
+    owner: str
+    repo: str
+    folder: str
+    file_name: str
+
+@app.post("/loadfile")
+def load_tree(request: LoadFileRequest):
     try:
-        response = GetFileFromGit(owner, repo, folder, file_name)
-        if(response != None):
+        response = GetFileFromGit(
+            request.owner,
+            request.repo,
+            request.folder,
+            request.file_name
+        )
+        if response is not None:
             return JSONResponse(content=response)
         else:
-            return JSONResponse(content="{}")
+            return JSONResponse(content={})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
