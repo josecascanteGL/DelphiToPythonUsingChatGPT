@@ -100,21 +100,28 @@ class GitHubClient:
             print(f"Error getting files in folder {github_origin_url}: {response.status_code} - {response.text}")
             return []
         
-    def GetSpecificFile(self, owner, repo, folder, file_name, branch='main'):
-        github_origin_url = f'{self.config.github_base_url}/{owner}/{repo}/contents/{folder}/{file_name}'
+
+    def GetSpecificFile(self, owner, repo, full_file_name, branch='main'):
+        github_origin_url = f'{self.config.github_base_url}/{owner}/{repo}/contents/{full_file_name}?ref={branch}'
         print(github_origin_url)
+
         response = requests.get(github_origin_url, headers=self.config.git_headers)
         if response.status_code != 200:
             print(f"Error reading file {github_origin_url}: {response.status_code} - {response.text}")
-               
-        # Base64-encode the content
-        file_bytes = response.content
-        encoded_content = base64.b64encode(file_bytes).decode('utf-8')
+            return {
+                "file": full_file_name.split("/")[-1],
+                "content": None,
+                "error": f"{response.status_code}: {response.text}"
+            }
+
+        data = response.json()
+        content_base64 = data.get("content", "").replace('\n', '')
 
         return {
-            "file": file_name,
-            "content_base64": encoded_content
+            "file": full_file_name.split("/")[-1],
+            "content": content_base64
         }
+
 
 
 

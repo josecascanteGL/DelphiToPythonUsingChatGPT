@@ -6,11 +6,11 @@ from CodeProcessor import ExecuteProcessor, GetGitTreeStructure, GetFileFromGit,
 
 
 
-#ExecuteProcessor()
+print(ExecuteProcessor())
 #{self.config.source_repo_name}/contents/{folder_name}'
 #https://github.com/josecascanteGL/DelphiToPythonUsingChatGPT/contents
-print(GetGitTreeStructure("josecascanteGL", "DelphiToPythonUsingChatGPT"))
-#response = GetFileFromGit("josecascanteGL", "DelphiToPythonUsingChatGPT", "src", "CodeProcessor.py")
+#print(GetGitTreeStructure("josecascanteGL", "DelphiToPythonUsingChatGPT"))
+#print(GetFileFromGit("josecascanteGL", "DelphiToPythonUsingChatGPT", "src/CodeProcessor.py"))
 #print(response)
 #response = RelayMessageToGPT("Hola mi nombre es Pedro", "")
 #print(response)
