@@ -60,6 +60,12 @@ Additionally, it includes a UI for exploring the repository and interacting with
                                                         }
 5. To run the api **sudo uvicorn api:app --host 0.0.0.0 --port 80** change the port if needed
 6. If you want to run the api in the background, use **sudo nohup uvicorn api:app --host 0.0.0.0 --port 80 > app.log 2>&1 &**
+
+## 📂 Run React App 
+1. On the terminal, go to folder ./frontend/src/folder-tree/
+2. Run npm install
+3. Run npm start 
+
 ---
 
 ## 🤝 Contributing
