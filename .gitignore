@@ -1,6 +1,9 @@
-src/__pycache__/CodeProcessor.cpython-313.pyc
-src/__pycache__/Configuration.cpython-313.pyc
-src/__pycache__/GitHubClient.cpython-313.pyc
-src/__pycache__/api.cpython-313.pyc
-src/__pycache__/Helper.cpython-313.pyc
-src/__pycache__/OpenAiClient.cpython-313.pyc
+# Ignore all __pycache__ directories and compiled Python files
+__pycache__/
+*.py[cod]
+
+# Ignore specific sensitive config file
+src/config/secrets.json
+
+# Ignore log files
+*.log
