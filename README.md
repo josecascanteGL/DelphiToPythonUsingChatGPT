@@ -46,10 +46,15 @@ Additionally, it includes a UI for exploring the repository and interacting with
 ## 📂 How to Use
 
 1. Clone this repository
-2. Run the main app (instructions TBD)
+2. Run the main app
 3. Enter a GitHub repo URL when prompted
 4. Use the UI to explore and analyze your code
 
+## 📂 Install dependencies and run API 
+1. From the terminal navigate to the scr folder
+2. Run pip install -r requirements.txt
+3. To run the api **sudo uvicorn api:app --host 0.0.0.0 --port 80** change the port if needed
+4. If you want to run the api in the background use **sudo nohup uvicorn api:app --host 0.0.0.0 --port 80 > app.log 2>&1 &**
 ---
 
 ## 🤝 Contributing
