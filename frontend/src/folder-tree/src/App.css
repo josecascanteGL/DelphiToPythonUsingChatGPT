@@ -1,3 +1,8 @@
+/* General Layout */
+.container-fluid {
+  min-height: 100vh;
+}
+
 .App {
   text-align: center;
 }
@@ -10,6 +15,15 @@
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -28,15 +42,36 @@
   color: #61dafb;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Utility Classes */
+.icon {
+  height: 24px;
+  width: 24px;
+  margin-right: 8px;
 }
 
+.light-mode-text {
+  color: #6c757d; /* Bootstrap's default muted color */
+}
+
+.dark-mode-text {
+  color: #d3d3d3;
+}
+
+/* Dark/Light Mode Specific Styles */
+.bg-dark {
+  background-color: #121212 !important;
+}
+.text-light {
+  color: #f5f5f5 !important;
+}
+.bg-light {
+  background-color: #f8f9fa !important;
+}
+.text-dark {
+  color: #212529 !important;
+}
+
+/* Tree Styling */
 .tree-branch {
   border-left: 1px solid #ddd;
   padding-left: 1rem;
@@ -47,11 +82,12 @@
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease;
 }
 
 .tree-item:hover {
   background-color: #f5f5f5;
+  opacity: 0.85;
 }
 
 .tree-item.active {
@@ -59,10 +95,18 @@
   font-weight: 500;
 }
 
-.light-mode-text {
-  color: #6c757d; /* Bootstrap's default muted color */
+/* Resizable Pane */
+.resizable-container {
+  display: flex;
 }
 
-.dark-mode-text {
-  color: #d3d3d3;
+.resizer {
+  cursor: col-resize;
+  width: 5px;
+  background-color: #ccc;
+  margin-right: 4px;
+}
+
+.bg-dark .resizer {
+  background-color: #444;
 }
