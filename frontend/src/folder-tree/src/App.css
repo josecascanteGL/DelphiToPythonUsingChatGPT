@@ -36,3 +36,33 @@
     transform: rotate(360deg);
   }
 }
+
+.tree-branch {
+  border-left: 1px solid #ddd;
+  padding-left: 1rem;
+  margin-left: 0.5rem;
+}
+
+.tree-item {
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.tree-item:hover {
+  background-color: #f5f5f5;
+}
+
+.tree-item.active {
+  background-color: #e9f5ff;
+  font-weight: 500;
+}
+
+.light-mode-text {
+  color: #6c757d; /* Bootstrap's default muted color */
+}
+
+.dark-mode-text {
+  color: #d3d3d3;
+}

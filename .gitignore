@@ -7,3 +7,4 @@ src/config/secrets.json
 
 # Ignore log files
 *.log
+tests/app.log
